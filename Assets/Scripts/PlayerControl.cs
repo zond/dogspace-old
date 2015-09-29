@@ -3,54 +3,44 @@ using System.Collections;
 
 public class PlayerControl : MonoBehaviour {
 
-	public float maxTurnRate = 1200f;
-	public Vector3 maxImpulse = new Vector3(10f, 10f, 700f);
-	public Vector3 velocity = Vector3.zero;
-	public float impulseSensitivity = 500f;
-	public float turnSensitivity = 1200f;
-	public float enginePowerValue = 0f;
+	public ParticleSystem leftExhaust;
+	public ParticleSystem rightExhaust;
+	public Rigidbody body;
 
-	public ParticleSystem leftExhaustFX;
-	public ParticleSystem rightExhaustFX;
+	private float throttle;
 
-	private Vector3 impulse = Vector3.zero;
-	private float desiredImpulse = 0f;
-	private Vector3 impulseActual = Vector3.zero;
-	private float maxImpulseChange = 100f;
-	private Vector3 turnRate = Vector3.zero;
-	private float desiredImpulseInput = 0f;
-	private float desiredTurnXInput = 0f;
-	private float desiredTurnYInput = 0f;
-	private float desiredInputX = 0f;
-	private float desiredInputY = 0f; 
-
-	private Transform thisTransform;
-
-	public Vector3 Velocity() {
-		get
+	public float Throttle {
+		get 
 		{
-				return velocity;
-		}
-	}
-
-	public Vector3 Impulse() {
-		get
-		{
-			return impulse;
+			return throttle;
 		}
 		set
 		{
-			impulse.x = Mathf.Clamp(value.x, 0, maxImpulse.x);
+			throttle = value;
+			if (leftExhaust) {
+				leftExhaust.startSpeed = value / 6f;
+				leftExhaust.emissionRate = value;
+			}
+			if (rightExhaust) {
+				rightExhaust.startSpeed = value / 6f;
+				rightExhaust.emissionRate = value;
+			}
 		}
 	}
-
-	// Use this for initialization
+		
 	void Start () {
-	
+		body = GetComponent<Rigidbody>();
+	}
+
+	void Update() {
+		foreach (Touch touch in Input.touches) {
+			if (touch.phase == TouchPhase.Moved && touch.position.x < Screen.width / 8) {
+				Throttle = 100f * ((float)touch.position.y) / ((float)Screen.height);
+			}
+		}
 	}
 	
-	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 	
 	}
 }
