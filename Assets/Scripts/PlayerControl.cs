@@ -80,17 +80,19 @@ public class PlayerControl : MonoBehaviour {
 			rotationDelta = rotationDelta * Quaternion.Euler (0, 0, -maxPitch);
 		}
 		if (Input.GetKey (KeyCode.A)) {
-			rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll, 0, 0);
-		} else if (Input.GetKey (KeyCode.D)) {
 			rotationDelta = rotationDelta * Quaternion.Euler (maxRoll, 0, 0);
+		} else if (Input.GetKey (KeyCode.D)) {
+			rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll, 0, 0);
 		}
 
-		if (Mathf.Abs (Input.acceleration.x) > 0.1) {
-			rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll * Input.acceleration.x, 0, 0);
-		}
-		float adjustedPitch = Mathf.Clamp (Input.acceleration.z + 0.5f, -1f, 1f);
-		if (Mathf.Abs (adjustedPitch) > 0.1) {
-			rotationDelta = rotationDelta * Quaternion.Euler (0, 0, maxPitch * adjustedPitch);
+		if (Input.acceleration.magnitude > 0f) {
+			if (Mathf.Abs (Input.acceleration.x) > 0.1) {
+				rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll * Input.acceleration.x, 0, 0);
+			}
+			float adjustedPitch = Mathf.Clamp (Input.acceleration.z + 0.5f, -1f, 1f);
+			if (Mathf.Abs (adjustedPitch) > 0.1) {
+				rotationDelta = rotationDelta * Quaternion.Euler (0, 0, maxPitch * adjustedPitch);
+			}
 		}
 
 		transform.rotation = transform.rotation * rotationDelta;
