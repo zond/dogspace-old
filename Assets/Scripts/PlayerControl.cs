@@ -41,15 +41,10 @@ public class PlayerControl : MonoBehaviour {
 		force = GetComponent<ConstantForce> ();
 	}
 
-	void Update() {
-		transform.position = body.transform.position;
-		foreach (Touch touch in Input.touches) {
-			if (touch.phase == TouchPhase.Moved && touch.position.x < Screen.width / 8) {
-				Throttle = 100f * ((float)touch.position.y) / ((float)Screen.height);
-			}
-		}
+	void FixedUpdate() {
+		speedometer.text = "" + (int) body.velocity.magnitude + ", " + body.position;
 
-		speedometer.text = "" + (int) body.velocity.magnitude;
+		// Keyboard
 
 		if (Input.GetKeyDown(KeyCode.Alpha1)) {
 			Throttle = 10;
@@ -85,6 +80,16 @@ public class PlayerControl : MonoBehaviour {
 			rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll, 0, 0);
 		}
 
+		// Touch
+
+		foreach (Touch touch in Input.touches) {
+			if (touch.phase == TouchPhase.Moved && touch.position.x < Screen.width / 8) {
+				Throttle = 100f * ((float)touch.position.y) / ((float)Screen.height);
+			}
+		}
+
+		// Accelerometer
+		
 		if (Input.acceleration.magnitude > 0f) {
 			if (Mathf.Abs (Input.acceleration.x) > 0.1) {
 				rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll * Input.acceleration.x, 0, 0);

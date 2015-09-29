@@ -15,7 +15,7 @@ public class TrackingCamera : MonoBehaviour {
 		thisTransform = transform;
 	}
 	
-	void LateUpdate () {
+	void FixedUpdate () {
 		if (!target) {
 			return;
 		}
