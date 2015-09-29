@@ -6,6 +6,7 @@ public class PlayerControl : MonoBehaviour {
 
 	public ParticleSystem leftExhaust;
 	public ParticleSystem rightExhaust;
+	public ParticleSystem spaceFog;
 	public Text speedometer;
 	public float maxRoll = 5;
 	public float maxPitch = 5;
@@ -43,6 +44,9 @@ public class PlayerControl : MonoBehaviour {
 
 	void FixedUpdate() {
 		speedometer.text = "" + (int) body.velocity.magnitude + ", " + body.position;
+
+		spaceFog.emissionRate = body.velocity.magnitude / 2f;
+		spaceFog.startLifetime = 50f / body.velocity.magnitude;
 
 		// Keyboard
 
@@ -101,9 +105,6 @@ public class PlayerControl : MonoBehaviour {
 		}
 
 		transform.rotation = transform.rotation * rotationDelta;
-
-
-
 	}
 
 }
