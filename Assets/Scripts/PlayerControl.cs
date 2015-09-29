@@ -7,6 +7,8 @@ public class PlayerControl : MonoBehaviour {
 	public ParticleSystem leftExhaust;
 	public ParticleSystem rightExhaust;
 	public Text speedometer;
+	public float roll = 2;
+	public float pitch = 2;
 
 	private Rigidbody body;
 	private ConstantForce force;
@@ -69,6 +71,23 @@ public class PlayerControl : MonoBehaviour {
 			Throttle = 90;
 		} else if (Input.GetKeyDown (KeyCode.Alpha0)) {
 			Throttle = 100;
+		}
+
+		Quaternion rotationDelta = Quaternion.identity;
+		if (Input.GetKey (KeyCode.S)) {
+			rotationDelta = rotationDelta * Quaternion.Euler (0, 0, pitch);
+		} else if (Input.GetKey (KeyCode.W)) {
+			rotationDelta = rotationDelta * Quaternion.Euler (0, 0, -pitch);
+		}
+		if (Input.GetKey (KeyCode.A)) {
+			rotationDelta = rotationDelta * Quaternion.Euler (roll, 0, 0);
+		} else if (Input.GetKey (KeyCode.D)) {
+			rotationDelta = rotationDelta * Quaternion.Euler (-roll, 0, 0);
+		}
+		transform.rotation = transform.rotation * rotationDelta;
+
+		if (Input.gyro.enabled) {
+			transform.rotation = Input.gyro.attitude;
 		}
 	}
 
