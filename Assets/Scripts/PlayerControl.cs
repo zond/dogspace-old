@@ -43,8 +43,6 @@ public class PlayerControl : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
-		speedometer.text = "" + (int) body.velocity.magnitude + ", " + body.position;
-
 		spaceFog.emissionRate = body.velocity.magnitude / 2f;
 		spaceFog.startLifetime = 50f / body.velocity.magnitude;
 
@@ -93,16 +91,27 @@ public class PlayerControl : MonoBehaviour {
 		}
 
 		// Accelerometer
-		
+
+		string msg = "";
+
 		if (Input.acceleration.magnitude > 0f) {
 			if (Mathf.Abs (Input.acceleration.x) > 0.1) {
 				rotationDelta = rotationDelta * Quaternion.Euler (-maxRoll * Input.acceleration.x, 0, 0);
 			}
-			float adjustedPitch = Mathf.Clamp (Input.acceleration.z + 0.5f, -1f, 1f);
+			msg = ", " + Input.acceleration.x;
+			float adjustedPitch = Input.acceleration.z + 0.5f;
+			if (Input.acceleration.z < 0f) {
+				adjustedPitch = (Input.acceleration.z + 0.5f) * 2;
+			} else {
+				adjustedPitch = (Input.acceleration.z + 0.5f) / 1.5f;
+			}
+			msg = msg + "-" + adjustedPitch;
 			if (Mathf.Abs (adjustedPitch) > 0.1) {
 				rotationDelta = rotationDelta * Quaternion.Euler (0, 0, maxPitch * adjustedPitch);
 			}
 		}
+
+		speedometer.text = "" + (int) body.velocity.magnitude + ", " + body.position + msg;
 
 		transform.rotation = transform.rotation * rotationDelta;
 	}
