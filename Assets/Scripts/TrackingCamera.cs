@@ -3,16 +3,27 @@ using System.Collections;
 
 public class TrackingCamera : MonoBehaviour {
 
-	public Transform target;
 	public Vector3 distance = new Vector3(0f, 5f, -10f);
 
 	public float positionDamping = 2f;
 	public float rotationDamping = 2f;
 
+	private Transform target;
 	private Transform thisTransform;
 
 	void Start () {
 		thisTransform = transform;
+	}
+
+	public Transform Target {
+		get
+		{
+			return target;
+		}
+		set
+		{
+			target = value;
+		}
 	}
 	
 	void FixedUpdate () {

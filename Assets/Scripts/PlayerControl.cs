@@ -1,73 +1,107 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Networking;
 
-public class PlayerControl : MonoBehaviour {
+[NetworkSettings(channel=1,sendInterval=0)]
+public class PlayerControl : NetworkBehaviour {
 
 	public ParticleSystem leftExhaust;
 	public ParticleSystem rightExhaust;
 	public ParticleSystem spaceFog;
-	public Text speedometer;
 	public float maxRoll = 5;
 	public float maxPitch = 5;
+	public GameObject camTarget;
 
 	private Rigidbody body;
 	private ConstantForce force;
 	private Vector3 forceVector = Vector3.zero;
-	private float throttle;
+	private Text speedometer;
+	private float wantedThrottle;
 
-	public float Throttle {
-		get 
-		{
-			return throttle;
-		}
-		set
-		{
-			throttle = value;
-			if (leftExhaust) {
-				leftExhaust.startSpeed = value / 6f;
-				leftExhaust.emissionRate = value;
-			}
-			if (rightExhaust) {
-				rightExhaust.startSpeed = value / 6f;
-				rightExhaust.emissionRate = value;
-			}
-			forceVector.x = throttle;
-			force.relativeForce = forceVector;
-		}
-	}
-		
+	[SyncVar]
+	private float throttle;
+	[SyncVar]
+	private Vector3 position;
+	[SyncVar]
+	private Vector3 velocity;
+	[SyncVar]
+	private Quaternion rotation;
+	[SyncVar]
+	private Vector3 angularVelocity;
+
 	void Start () {
 		body = GetComponent<Rigidbody>();
-		force = GetComponent<ConstantForce> ();
+		if (isLocalPlayer) {
+			speedometer = (Text) FindObjectOfType (typeof(Text));
+			GameObject camera = GameObject.FindGameObjectWithTag ("MainCamera");
+			camera.GetComponent<TrackingCamera> ().Target = camTarget.transform;
+		} else {
+			force = GetComponent<ConstantForce> ();
+		}
 	}
 
+	[Command(channel=1)]
+	void CmdControls(Quaternion rotationDelta, float newThrottle) {
+		transform.rotation = transform.rotation * rotationDelta;
+		throttle = newThrottle;
+		forceVector.x = newThrottle;
+		force.relativeForce = forceVector;
+	}
+
+
+
 	void FixedUpdate() {
+		if (leftExhaust) {
+			leftExhaust.startSpeed = throttle / 6f;
+			leftExhaust.emissionRate = throttle;
+		}
+		if (rightExhaust) {
+			rightExhaust.startSpeed = throttle / 6f;
+			rightExhaust.emissionRate = throttle;
+		}
+
+		if (isClient) {
+			body.transform.position = Vector3.Lerp (body.transform.position, position, 0.1f);
+			body.velocity = Vector3.Lerp (body.velocity, velocity, 0.1f);
+			body.transform.rotation = Quaternion.Lerp (body.transform.rotation, rotation, 0.1f);
+			body.angularVelocity = angularVelocity = Vector3.Lerp (body.angularVelocity, angularVelocity, 0.1f);
+		} else {
+			position = body.transform.position;
+			velocity = body.velocity;
+			rotation = body.transform.rotation;
+			angularVelocity = body.angularVelocity;
+		}
+
+		if (!isLocalPlayer) {
+			return;
+		}
+
 		spaceFog.emissionRate = body.velocity.magnitude / 2f;
 		spaceFog.startLifetime = 50f / body.velocity.magnitude;
 
 		// Keyboard
 
-		if (Input.GetKeyDown(KeyCode.Alpha1)) {
-			Throttle = 10;
-		} else if (Input.GetKeyDown(KeyCode.Alpha2)) {
-			Throttle = 20;
-		} else if (Input.GetKeyDown(KeyCode.Alpha3)) {
-			Throttle = 30;
-		} else if (Input.GetKeyDown(KeyCode.Alpha4)) {
-			Throttle = 40;
-		} else if (Input.GetKeyDown(KeyCode.Alpha5)) {
-			Throttle = 50;
-		} else if (Input.GetKeyDown(KeyCode.Alpha6)) {
-			Throttle = 60;
-		} else if (Input.GetKeyDown(KeyCode.Alpha7)) {
-			Throttle = 70;
-		} else if (Input.GetKeyDown(KeyCode.Alpha8)) {
-			Throttle = 80;
-		} else if (Input.GetKeyDown(KeyCode.Alpha9)) {
-			Throttle = 90;
+		if (Input.GetKeyDown (KeyCode.Alpha1)) {
+			wantedThrottle = 0;
+		} else if (Input.GetKeyDown (KeyCode.Alpha2)) {
+			wantedThrottle = 11;
+		} else if (Input.GetKeyDown (KeyCode.Alpha3)) {
+			wantedThrottle = 22;
+		} else if (Input.GetKeyDown (KeyCode.Alpha4)) {
+			wantedThrottle = 33;
+		} else if (Input.GetKeyDown (KeyCode.Alpha5)) {
+			wantedThrottle = 45;
+		} else if (Input.GetKeyDown (KeyCode.Alpha6)) {
+			wantedThrottle = 56;
+		} else if (Input.GetKeyDown (KeyCode.Alpha7)) {
+			wantedThrottle = 67;
+		} else if (Input.GetKeyDown (KeyCode.Alpha8)) {
+			wantedThrottle = 78;
+		} else if (Input.GetKeyDown (KeyCode.Alpha9)) {
+			wantedThrottle = 89;
 		} else if (Input.GetKeyDown (KeyCode.Alpha0)) {
-			Throttle = 100;
+			wantedThrottle = 100;
 		}
 
 		Quaternion rotationDelta = Quaternion.identity;
@@ -86,7 +120,7 @@ public class PlayerControl : MonoBehaviour {
 
 		foreach (Touch touch in Input.touches) {
 			if (touch.phase == TouchPhase.Moved && touch.position.x < Screen.width / 8) {
-				Throttle = 100f * ((float)touch.position.y) / ((float)Screen.height);
+				wantedThrottle = 100f * ((float)touch.position.y) / ((float)Screen.height);
 			}
 		}
 
@@ -111,9 +145,13 @@ public class PlayerControl : MonoBehaviour {
 			}
 		}
 
-		speedometer.text = "" + (int) body.velocity.magnitude + ", " + body.position + msg;
+		speedometer.text = "" + (int)body.velocity.magnitude + ", " + body.position + msg;
 
-		transform.rotation = transform.rotation * rotationDelta;
+		if (rotationDelta != Quaternion.identity || wantedThrottle != throttle) {
+			CmdControls (rotationDelta, wantedThrottle);
+		}
+
+
 	}
 
 }
