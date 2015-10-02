@@ -41,7 +41,7 @@ public class PlayerControl : NetworkBehaviour {
 		}
 	}
 
-	[Command(channel=1)]
+	[Command(channel=0)]
 	void CmdControls(Quaternion rotationDelta, float newThrottle) {
 		transform.rotation = transform.rotation * rotationDelta;
 		throttle = newThrottle;
@@ -63,9 +63,9 @@ public class PlayerControl : NetworkBehaviour {
 
 		if (isClient) {
 			body.transform.position = Vector3.Lerp (body.transform.position, position, 0.1f);
-			body.velocity = Vector3.Lerp (body.velocity, velocity, 0.1f);
-			body.transform.rotation = Quaternion.Lerp (body.transform.rotation, rotation, 0.1f);
-			body.angularVelocity = angularVelocity = Vector3.Lerp (body.angularVelocity, angularVelocity, 0.1f);
+			body.velocity = velocity;
+			body.transform.rotation = Quaternion.Lerp(body.transform.rotation, rotation, 0.1f);
+			body.angularVelocity = angularVelocity;
 		} else {
 			position = body.transform.position;
 			velocity = body.velocity;
